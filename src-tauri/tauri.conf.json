@@ -26,6 +26,13 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Thiago Schulz",
+    "copyright": "Copyright (c) 2026 Thiago Schulz",
+    "license": "MIT",
+    "homepage": "https://github.com/schuuulz/androidsEye",
+    "category": "DeveloperTool",
+    "shortDescription": "Veja, espelhe e controle aparelhos Android",
+    "longDescription": "Hub visual para o Android Debug Bridge: lista de dispositivos em tempo real, espelhamento de tela com scrcpy, shell ADB integrado, extração de APKs e pareamento por Wi-Fi com QR Code, sem precisar digitar comandos adb.",
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
   }
 }
