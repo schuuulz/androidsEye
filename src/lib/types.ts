@@ -1,4 +1,4 @@
-export type DeviceState = "online" | "unauthorized" | "offline";
+export type DeviceState = "online" | "unauthorized" | "noPermission" | "offline";
 export type Connection = "usb" | "wifi";
 
 export interface Battery {

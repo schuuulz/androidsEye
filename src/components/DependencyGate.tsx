@@ -21,8 +21,8 @@ const platform = navigator.userAgent.includes("Windows")
 const installHints: Record<"adb" | "scrcpy", Record<typeof platform, string>> = {
   adb: {
     windows: "winget install Google.PlatformTools",
-    mac: "brew install android-platform-tools",
-    linux: "sudo apt install android-tools-adb",
+    mac: "brew install --cask android-platform-tools",
+    linux: "sudo apt install adb",
   },
   scrcpy: {
     windows: "winget install Genymobile.scrcpy",

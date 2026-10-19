@@ -72,6 +72,10 @@ function announceChanges(before: Map<string, Device> | null, after: Device[]) {
       toast.warning("Autorização pendente", {
         description: "Aceite o diálogo de depuração USB na tela do aparelho.",
       });
+    } else if (device.state === "noPermission" && old?.state !== "noPermission") {
+      toast.warning("Sem permissão para acessar o USB", {
+        description: "Veja no card como liberar o acesso.",
+      });
     }
   }
 

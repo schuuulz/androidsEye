@@ -1,0 +1,105 @@
+# Gera os instaladores de Windows, Linux e macOS e os anexa a uma Release em
+# RASCUNHO (v<versão do tauri.conf.json>). Publicar continua sendo um clique.
+#
+# - Merge na main: roda sozinho, mas só com o repositório público (em repositório
+#   privado, minutos de macOS custam 10×).
+# - Manual: Actions › Release › Run workflow — funciona sempre.
+# - Versão já publicada nunca é sobrescrita: aumente "version" em
+#   src-tauri/tauri.conf.json para começar o próximo rascunho.
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: true
+
+jobs:
+  version:
+    if: github.event_name == 'workflow_dispatch' || !github.event.repository.private
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.check.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(jq -r .version src-tauri/tauri.conf.json)
+          # Rascunhos não são encontrados por tag; só versões publicadas.
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo "::warning::v$version já foi publicada. Aumente \"version\" em src-tauri/tauri.conf.json para gerar um novo rascunho."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: version
+    if: needs.version.outputs.build == 'true'
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            args: ""
+          # 22.04 em vez de latest: glibc mais antiga = roda em mais distros.
+          - os: ubuntu-22.04
+            args: ""
+          - os: macos-latest
+            args: --target universal-apple-darwin
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.os == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Bibliotecas do Linux
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: androidsEye v__VERSION__
+          releaseBody: |
+            ## Instalação
+
+            | Sistema | Arquivo |
+            |---|---|
+            | **Windows** | `androidsEye_*_x64-setup.exe`: já baixa o scrcpy e o adb |
+            | **macOS** (Intel e Apple Silicon) | `androidsEye_*_universal.dmg` |
+            | **Ubuntu / Debian** | `androidsEye_*_amd64.deb` |
+            | **Fedora** | `androidsEye-*.x86_64.rpm` |
+            | **Outras distros** | `androidsEye_*_amd64.AppImage` |
+
+            Instruções completas no [README](https://github.com/${{ github.repository }}#-instalação).
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

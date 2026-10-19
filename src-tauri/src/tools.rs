@@ -17,7 +17,8 @@ pub struct Tools {
 impl Tools {
     /// Procura cada binário, nesta ordem: `ADB_PATH`/`SCRCPY_PATH`, a pasta
     /// `scrcpy` ao lado do executável (onde o instalador do Windows coloca o
-    /// scrcpy e o adb) e, por fim, o PATH.
+    /// scrcpy e o adb), o PATH e, por fim, as pastas usuais de gerenciadores
+    /// de pacote.
     pub fn locate() -> Self {
         Self {
             adb: locate("adb", "ADB_PATH"),
@@ -37,7 +38,24 @@ fn locate(binary: &str, env_override: &str) -> Option<PathBuf> {
             which::which_in(binary, Some(&bundled), &bundled).ok()
         })
         .or_else(|| which::which(binary).ok())
+        .or_else(|| {
+            // Apps abertos pelo Finder/menu não herdam o PATH do terminal.
+            let cwd = std::env::current_dir().ok()?;
+            which::which_in(binary, Some(std::env::join_paths(FALLBACK_DIRS).ok()?), cwd).ok()
+        })
 }
+
+/// Onde Homebrew, Linuxbrew e Snap instalam binários.
+#[cfg(unix)]
+const FALLBACK_DIRS: &[&str] = &[
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+    "/home/linuxbrew/.linuxbrew/bin",
+    "/snap/bin",
+];
+
+#[cfg(not(unix))]
+const FALLBACK_DIRS: &[&str] = &[];
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

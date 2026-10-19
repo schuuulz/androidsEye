@@ -23,10 +23,12 @@ const QUICK_RECONNECT_DELAY: Duration = Duration::from_millis(150);
 const BATTERY_REFRESH: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum DeviceState {
     Online,
     Unauthorized,
+    /// Linux sem regras udev: o sistema não deixa o adb abrir o USB.
+    NoPermission,
     Offline,
 }
 
@@ -35,6 +37,8 @@ impl DeviceState {
         match raw {
             "device" => Self::Online,
             "unauthorized" | "authorizing" => Self::Unauthorized,
+            // A linha completa é "no permissions (user in plugdev group; ...)".
+            "no" => Self::NoPermission,
             _ => Self::Offline,
         }
     }
@@ -396,10 +400,12 @@ mod tests {
     #[test]
     fn parses_long_device_list() {
         let payload = "R58M123\tdevice product:a52 model:SM_A525M device:a52q transport_id:1\n\
-                       192.168.0.10:5555\tunauthorized transport_id:2\n";
+                       192.168.0.10:5555\tunauthorized transport_id:2\n\
+                       ZY22\tno permissions (user in plugdev group; are your udev rules wrong?) usb:1-1\n";
         let devices = parse_device_list(payload);
 
-        assert_eq!(devices.len(), 2);
+        assert_eq!(devices.len(), 3);
+        assert_eq!(devices[2].state, DeviceState::NoPermission);
         assert_eq!(devices[0].state, DeviceState::Online);
         assert_eq!(devices[0].model.as_deref(), Some("SM A525M"));
         assert_eq!(devices[1].state, DeviceState::Unauthorized);

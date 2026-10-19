@@ -94,6 +94,7 @@ export function DeviceCard({ device, onOpenTerminal, onOpenApks }: DeviceCardPro
       <SerialChip serial={device.serial} connection={device.connection} />
 
       {device.state === "unauthorized" && <AuthorizationHelp />}
+      {device.state === "noPermission" && <UsbPermissionHelp />}
 
       <div className="mt-4 flex items-center gap-2 border-t border-line/70 pt-3.5">
         <Button
@@ -132,7 +133,7 @@ function DeviceAvatar({ device }: { device: Device }) {
   const tone =
     device.state === "online"
       ? "from-emerald-400/20 to-emerald-400/5 text-emerald-300 ring-emerald-400/20"
-      : device.state === "unauthorized"
+      : device.state === "unauthorized" || device.state === "noPermission"
         ? "from-amber-400/20 to-amber-400/5 text-amber-300 ring-amber-400/20"
         : "from-zinc-400/10 to-transparent text-zinc-500 ring-white/10";
 
@@ -213,18 +214,57 @@ function SerialChip({ serial, connection }: { serial: string; connection: Device
   );
 }
 
-function AuthorizationHelp() {
+function HelpPanel({ title, steps }: { title: string; steps: React.ReactNode[] }) {
   return (
     <div className="mt-3 flex gap-2.5 rounded-xl bg-amber-400/[0.06] p-3 ring-1 ring-inset ring-amber-400/15">
       <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-300" />
-      <div className="text-xs leading-relaxed text-amber-100/80">
-        <p className="font-medium text-amber-200">Aceite a chave RSA no celular</p>
+      <div className="min-w-0 text-xs leading-relaxed text-amber-100/80">
+        <p className="font-medium text-amber-200">{title}</p>
         <ol className="mt-1 list-inside list-decimal space-y-0.5 text-amber-100/60 marker:text-amber-300/50">
-          <li>Desbloqueie a tela do aparelho</li>
-          <li>Toque em “Permitir depuração USB”</li>
-          <li>Marque “Sempre permitir deste computador”</li>
+          {steps.map((step, i) => (
+            <li key={i}>{step}</li>
+          ))}
         </ol>
       </div>
     </div>
+  );
+}
+
+function AuthorizationHelp() {
+  return (
+    <HelpPanel
+      title="Aceite a chave RSA no celular"
+      steps={[
+        "Desbloqueie a tela do aparelho",
+        "Toque em “Permitir depuração USB”",
+        "Marque “Sempre permitir deste computador”",
+      ]}
+    />
+  );
+}
+
+function Command({ children }: { children: string }) {
+  return (
+    <code className="rounded bg-black/30 px-1 py-px font-mono text-[11px] text-amber-100/90 select-text">
+      {children}
+    </code>
+  );
+}
+
+/** Linux sem regras udev: o sistema bloqueia o acesso do adb ao USB. */
+function UsbPermissionHelp() {
+  return (
+    <HelpPanel
+      title="O Linux bloqueou o acesso ao USB"
+      steps={[
+        <>
+          Instale as regras USB: <Command>sudo apt install android-sdk-platform-tools-common</Command>
+        </>,
+        <>
+          Entre no grupo: <Command>sudo usermod -aG plugdev $USER</Command> e reinicie a sessão
+        </>,
+        "Desconecte e conecte o cabo de novo",
+      ]}
+    />
   );
 }

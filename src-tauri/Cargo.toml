@@ -2,6 +2,7 @@
 name = "androidseye"
 version = "0.1.0"
 description = "Hub de gerenciamento ADB"
+license = "MIT"
 edition = "2021"
 
 [lib]

@@ -14,6 +14,7 @@ Um hub desktop que transforma o Android Debug Bridge em uma interface visual, r�
 ![Rust](https://img.shields.io/badge/Rust-backend-DEA584?style=for-the-badge&logo=rust&logoColor=white&labelColor=09090b)
 ![React](https://img.shields.io/badge/React_19-frontend-61DAFB?style=for-the-badge&logo=react&logoColor=white&labelColor=09090b)
 ![Plataformas](https://img.shields.io/badge/Windows_·_Linux_·_macOS-10b981?style=for-the-badge&labelColor=09090b)
+![Licença MIT](https://img.shields.io/badge/licença-MIT-a1a1aa?style=for-the-badge&labelColor=09090b)
 
 </div>
 
@@ -65,7 +66,8 @@ adb connect 192.168.0.10:41235
 - A lista se atualiza **sozinha** ao plugar, desplugar ou autorizar um aparelho. Não existe botão de "atualizar".
 - Cada card mostra **modelo, fabricante, serial/IP, bateria** (com indicação de carregamento) e o tipo de conexão
   (**USB** ou **Wi-Fi**).
-- Status claros: 🟢 **Online** · 🟡 **Não autorizado**, com o passo a passo para aceitar a chave RSA · ⚪ **Offline**.
+- Status claros, cada um com o que fazer: 🟢 **Online** · 🟡 **Não autorizado** (passo a passo para aceitar a chave
+  RSA) · 🟡 **Sem permissão USB** (como liberar no Linux) · ⚪ **Offline**.
 - **Um card por aparelho físico**: mesmo que o adb enxergue o celular por USB, mDNS e IP ao mesmo tempo, você vê só um.
 
 ### 🖥️ Espelhamento de tela
@@ -117,14 +119,29 @@ Baixe o `androidsEye_x.y.z_x64-setup.exe` na página de **Releases** e execute. 
 > Sem internet na hora da instalação? Tudo bem: o app é instalado mesmo assim e, ao abrir, mostra como instalar o
 > scrcpy. Ao desinstalar, a pasta do scrcpy e a entrada no PATH são removidas.
 
-### Linux e macOS
+### 🐧 Linux
 
-Instale as dependências e depois o pacote do androidsEye (`.deb`, `.AppImage` ou `.dmg`):
-
-| Sistema | Comando |
+| Distro | Como instalar |
 |---|---|
-| Ubuntu / Debian | `sudo apt install android-tools-adb scrcpy` |
-| macOS (Homebrew) | `brew install android-platform-tools scrcpy` |
+| **Ubuntu / Debian** | Baixe o `.deb` e rode `sudo apt install ./androidsEye_*_amd64.deb`. O `adb` vem junto; o `scrcpy` e as regras USB são instalados como recomendados. |
+| **Fedora** | `sudo dnf install ./androidsEye-*.x86_64.rpm` (instala o `android-tools`) e o scrcpy pelo [COPR](https://copr.fedorainfracloud.org/coprs/zeno/scrcpy/). |
+| **Outras** | Use o `.AppImage` (`chmod +x` e execute) e instale `adb` e `scrcpy` pelo gerenciador da sua distro. |
+
+> **Celular aparece como "Sem permissão USB"?** O Linux bloqueia o acesso ao aparelho até existirem regras udev.
+> O próprio card mostra como resolver: `sudo apt install android-sdk-platform-tools-common`,
+> `sudo usermod -aG plugdev $USER`, reiniciar a sessão e reconectar o cabo.
+
+### 🍎 macOS (Intel e Apple Silicon)
+
+1. Instale as dependências com o [Homebrew](https://brew.sh):
+   ```sh
+   brew install --cask android-platform-tools
+   brew install scrcpy
+   ```
+2. Abra o `.dmg` e arraste o **androidsEye** para **Aplicativos**.
+3. Na **primeira abertura**, o macOS avisa que não pode verificar o desenvolvedor, porque o app ainda não é assinado
+   pela Apple. Vá em **Ajustes do Sistema › Privacidade e Segurança** e clique em **Abrir Mesmo Assim**. Isso só é
+   necessário uma vez.
 
 > Já tem o adb ou o scrcpy em outro lugar? Aponte com as variáveis `ADB_PATH` e `SCRCPY_PATH`.
 
@@ -197,6 +214,19 @@ cargo test             # testes do backend (parsers do adb, mDNS, known hosts, f
 cargo clippy           # lint
 ```
 
+### 🚢 Publicando uma versão
+
+Os instaladores dos três sistemas são gerados pelo GitHub Actions (`.github/workflows/release.yml`). Não é preciso ter
+Linux nem Mac:
+
+1. Aumente `version` em `src-tauri/tauri.conf.json` (ex.: `0.2.0`).
+2. Faça merge na `main`. O workflow compila Windows, Linux e macOS e monta uma Release **rascunho** `v0.2.0` com todos
+   os instaladores. Merges seguintes atualizam o mesmo rascunho.
+3. Revise o rascunho em **Releases** e clique em **Publish**.
+
+Uma versão já publicada nunca é sobrescrita: o workflow avisa para aumentar o número. Enquanto o repositório for
+privado, o workflow não roda sozinho (minutos de macOS custam 10×); dispare em **Actions › Release › Run workflow**.
+
 <details>
 <summary><b>Estrutura do projeto</b></summary>
 
@@ -221,10 +251,26 @@ src-tauri/                    Rust + Tauri v2
 │  ├─ pairing.rs              pareamento e despareamento Wi-Fi via mDNS
 │  ├─ known_hosts.rs          aparelhos pareados que o adb lembra
 │  └─ error.rs                AdbError → { kind, message, hint }
-└─ windows/                   hooks do instalador NSIS + script do scrcpy
+├─ windows/                   hooks do instalador NSIS + script do scrcpy
+└─ tauri.{windows,linux,macos}.conf.json   empacotamento de cada sistema
 ```
 
 </details>
+
+---
+
+## 🤝 Contribuindo
+
+O androidsEye é open-source e contribuições são bem-vindas: abra uma *issue* para relatar um bug ou sugerir uma
+ideia, ou envie um *pull request*. Antes de enviar, rode `cargo test`, `cargo clippy` e `npm run build`.
+
+## 📄 Licença
+
+Distribuído sob a licença [MIT](LICENSE). Use, modifique e redistribua à vontade, mantendo o aviso de copyright.
+
+O androidsEye usa, mas não inclui no código-fonte, o [scrcpy](https://github.com/Genymobile/scrcpy) (Apache-2.0) e o
+[Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) (`adb`), que têm suas
+próprias licenças.
 
 ---
 

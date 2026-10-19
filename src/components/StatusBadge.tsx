@@ -11,6 +11,11 @@ const styles: Record<DeviceState, { label: string; dot: string; badge: string }>
     dot: "bg-amber-400 shadow-[0_0_8px_rgb(251_191_36/0.7)]",
     badge: "bg-amber-400/10 text-amber-300 ring-amber-400/20",
   },
+  noPermission: {
+    label: "Sem permissão USB",
+    dot: "bg-amber-400 shadow-[0_0_8px_rgb(251_191_36/0.7)]",
+    badge: "bg-amber-400/10 text-amber-300 ring-amber-400/20",
+  },
   offline: {
     label: "Offline",
     dot: "bg-zinc-500",
