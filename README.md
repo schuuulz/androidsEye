@@ -119,13 +119,26 @@ Baixe o `androidsEye_x.y.z_x64-setup.exe` na página de **Releases** e execute. 
 > Sem internet na hora da instalação? Tudo bem: o app é instalado mesmo assim e, ao abrir, mostra como instalar o
 > scrcpy. Ao desinstalar, a pasta do scrcpy e a entrada no PATH são removidas.
 
-### 🐧 Linux
+### 🐧 Linux: um comando
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/schuuulz/androidsEye/main/install.sh | sh
+```
+
+O script detecta sua distro, baixa o pacote certo da última Release (`.deb`, `.rpm` ou AppImage) e instala junto o
+`adb`, o `scrcpy` e as regras USB, para o celular ser reconhecido pelo cabo de primeira. Para **atualizar**, rode o
+mesmo comando. Para **remover**: `curl -fsSL .../install.sh | sh -s -- --uninstall`.
+
+<details>
+<summary>Prefere instalar manualmente?</summary>
 
 | Distro | Como instalar |
 |---|---|
 | **Ubuntu / Debian** | Baixe o `.deb` e rode `sudo apt install ./androidsEye_*_amd64.deb`. O `adb` vem junto; o `scrcpy` e as regras USB são instalados como recomendados. |
 | **Fedora** | `sudo dnf install ./androidsEye-*.x86_64.rpm` (instala o `android-tools`) e o scrcpy pelo [COPR](https://copr.fedorainfracloud.org/coprs/zeno/scrcpy/). |
 | **Outras** | Use o `.AppImage` (`chmod +x` e execute) e instale `adb` e `scrcpy` pelo gerenciador da sua distro. |
+
+</details>
 
 > **Celular aparece como "Sem permissão USB"?** O Linux bloqueia o acesso ao aparelho até existirem regras udev.
 > O próprio card mostra como resolver: `sudo apt install android-sdk-platform-tools-common`,

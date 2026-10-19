@@ -91,6 +91,11 @@ jobs:
           releaseBody: |
             ## Instalação
 
+            **Linux, em um comando:**
+            ```sh
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
+            ```
+
             | Sistema | Arquivo |
             |---|---|
             | **Windows** | `androidsEye_*_x64-setup.exe`: já baixa o scrcpy e o adb |
